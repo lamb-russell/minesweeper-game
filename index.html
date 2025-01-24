@@ -13,10 +13,29 @@
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 10px;
+        }
+
+        .instructions {
+            max-width: 600px;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions h2 {
+            margin: 0 0 10px;
+        }
+
+        .instructions p {
+            margin: 5px 0;
         }
 
         .board {
@@ -56,13 +75,49 @@
         .cell.questionmark {
             background-color: #ff9a9a;
         }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
+    <div class="instructions">
+        <h2>How to Play Minesweeper</h2>
+        <p>💣 <strong>Goal:</strong> Reveal all cells that are not mines without clicking on any mine.</p>
+        <p>💡 <strong>How to Play:</strong></p>
+        <ul>
+            <li><strong>Left-Click:</strong> Reveal a cell. If it's a number, it shows the count of adjacent mines. If it's a mine, you lose!</li>
+            <li><strong>Right-Click:</strong> Mark a cell as a flag (potential mine) or a question mark.</li>
+            <li>Reveal all non-mine cells or correctly flag all mines to win the game.</li>
+        </ul>
+    </div>
+    <div class="controls">
+        <button class="button" id="resetButton">Reset</button>
+    </div>
     <div class="board"></div>
     <script>
         const board = document.querySelector('.board');
+        const resetButton = document.getElementById('resetButton');
         let mineField;
+        let totalMines = 10;
+        let correctlyFlaggedMines = 0;
 
         function createMinefield(height, width, mines) {
             const totalCells = height * width;
@@ -73,6 +128,7 @@
             for (let i = 0; i < height; i++) {
                 mineField.push(mineArray.slice(i * width, i * width + width));
             }
+            correctlyFlaggedMines = 0; // Reset the flag count
         }
 
         function renderBoard() {
@@ -150,6 +206,8 @@
                     }
                 }
             }
+
+            checkWinCondition();
         }
 
         function revealAllMines() {
@@ -167,22 +225,36 @@
         board.addEventListener('contextmenu', (event) => {
             event.preventDefault();
             const cell = event.target;
+            const x = parseInt(cell.dataset.x);
+            const y = parseInt(cell.dataset.y);
+
             if (cell.classList.contains('cell') && !cell.classList.contains('revealed')) {
                 if (cell.classList.contains('flag')) {
                     cell.classList.remove('flag');
-                    cell.classList.add('questionmark');
-                } else if (cell.classList.contains('questionmark')) {
-                    cell.classList.remove('questionmark');
+                    if (mineField[x][y] === 'mine') correctlyFlaggedMines--;
                 } else {
                     cell.classList.add('flag');
+                    if (mineField[x][y] === 'mine') correctlyFlaggedMines++;
                 }
             }
+
+            checkWinCondition();
         });
+
+        function checkWinCondition() {
+            if (correctlyFlaggedMines === totalMines) {
+                alert('Congratulations! You win!');
+            }
+        }
 
         function game() {
             createMinefield(10, 10, 10);
             renderBoard();
         }
+
+        resetButton.addEventListener('click', () => {
+            game(); // Restart the game
+        });
 
         // Start the game when the page loads
         window.onload = game;
