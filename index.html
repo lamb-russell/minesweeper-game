@@ -276,10 +276,12 @@
                         const cellIndex = i * mineField[0].length + j;
                         const cell = board.children[cellIndex];
                         cell.classList.add('mine');
+                        cell.textContent = '💣'; // Add bomb emoji
                     }
                 }
             }
         }
+
 
         function checkWinCondition() {
             if (correctlyFlaggedMines === totalMines) {
