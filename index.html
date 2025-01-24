@@ -40,7 +40,6 @@
 
         .board {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
             gap: 1px;
             width: 90vw;
             height: 90vw;
@@ -79,7 +78,9 @@
         .controls {
             margin: 20px 0;
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+            align-items: center;
         }
 
         .button {
@@ -95,6 +96,24 @@
         .button:hover {
             background-color: #0056b3;
         }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            padding: 5px;
+            font-size: 1rem;
+            width: 70px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -109,14 +128,32 @@
         </ul>
     </div>
     <div class="controls">
+        <div class="input-group">
+            <label for="gridHeight">Grid Height:</label>
+            <input type="number" id="gridHeight" min="5" max="20" value="10">
+        </div>
+        <div class="input-group">
+            <label for="gridWidth">Grid Width:</label>
+            <input type="number" id="gridWidth" min="5" max="20" value="10">
+        </div>
+        <div class="input-group">
+            <label for="mineCount">Mines:</label>
+            <input type="number" id="mineCount" min="1" value="10">
+        </div>
+        <button class="button" id="applySettings">Apply Settings</button>
         <button class="button" id="resetButton">Reset</button>
     </div>
     <div class="board"></div>
     <script>
         const board = document.querySelector('.board');
         const resetButton = document.getElementById('resetButton');
+        const applySettingsButton = document.getElementById('applySettings');
+        const gridHeightInput = document.getElementById('gridHeight');
+        const gridWidthInput = document.getElementById('gridWidth');
+        const mineCountInput = document.getElementById('mineCount');
+
         let mineField;
-        let totalMines = 10;
+        let totalMines;
         let correctlyFlaggedMines = 0;
 
         function createMinefield(height, width, mines) {
@@ -128,35 +165,47 @@
             for (let i = 0; i < height; i++) {
                 mineField.push(mineArray.slice(i * width, i * width + width));
             }
-            correctlyFlaggedMines = 0; // Reset the flag count
+            correctlyFlaggedMines = 0;
+            totalMines = mines;
         }
 
-        function renderBoard() {
+        function renderBoard(height, width) {
+            board.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${height}, 1fr)`;
             board.innerHTML = '';
-            for (let i = 0; i < mineField.length; i++) {
-                for (let j = 0; j < mineField[i].length; j++) {
+
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
                     const cell = document.createElement('div');
                     cell.classList.add('cell');
                     cell.dataset.x = i;
                     cell.dataset.y = j;
 
-                    // Left click to reveal
                     cell.addEventListener('click', () => revealCell(i, j));
+                    cell.addEventListener('contextmenu', (event) => handleRightClick(event, i, j));
 
                     board.appendChild(cell);
                 }
             }
         }
 
-        function countAdjacentMines(x, y) {
-            let minesCount = 0;
-            for (let i = x - 1; i <= x + 1; i++) {
-                for (let j = y - 1; j <= y + 1; j++) {
-                    if (i < 0 || i >= mineField.length || j < 0 || j >= mineField[0].length) continue;
-                    if (mineField[i][j] === 'mine') minesCount++;
+        function handleRightClick(event, x, y) {
+            event.preventDefault();
+            const cellIndex = x * mineField[0].length + y;
+            const cell = board.children[cellIndex];
+
+            if (!cell.classList.contains('revealed')) {
+                if (cell.classList.contains('flag')) {
+                    cell.classList.remove('flag');
+                    cell.textContent = '';
+                    if (mineField[x][y] === 'mine') correctlyFlaggedMines--;
+                } else {
+                    cell.classList.add('flag');
+                    cell.textContent = '🚩';
+                    if (mineField[x][y] === 'mine') correctlyFlaggedMines++;
                 }
             }
-            return minesCount;
+            checkWinCondition();
         }
 
         function revealCell(x, y) {
@@ -192,7 +241,7 @@
                             ) {
                                 const adjCellIndex = i * mineField[0].length + j;
                                 const adjCell = board.children[adjCellIndex];
-                                if (!adjCell.classList.contains('revealed') && !adjCell.classList.contains('flag')) {
+                                if (!adjCell.classList.contains('revealed')) {
                                     adjCell.classList.add('revealed');
                                     const adjMines = countAdjacentMines(i, j);
                                     if (adjMines > 0) {
@@ -206,8 +255,18 @@
                     }
                 }
             }
-
             checkWinCondition();
+        }
+
+        function countAdjacentMines(x, y) {
+            let minesCount = 0;
+            for (let i = x - 1; i <= x + 1; i++) {
+                for (let j = y - 1; j <= y + 1; j++) {
+                    if (i < 0 || i >= mineField.length || j < 0 || j >= mineField[0].length) continue;
+                    if (mineField[i][j] === 'mine') minesCount++;
+                }
+            }
+            return minesCount;
         }
 
         function revealAllMines() {
@@ -222,50 +281,25 @@
             }
         }
 
-        board.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-            const cell = event.target;
-            const x = parseInt(cell.dataset.x);
-            const y = parseInt(cell.dataset.y);
-
-            if (cell.classList.contains('cell') && !cell.classList.contains('revealed')) {
-                if (cell.classList.contains('flag')) {
-                    cell.classList.remove('flag');
-                    cell.textContent = ''; // Remove the emoji
-                    cell.classList.add('questionmark');
-                    cell.textContent = '❓'; // Add the question mark emoji
-                    if (mineField[x][y] === 'mine') correctlyFlaggedMines--;
-                } else if (cell.classList.contains('questionmark')) {
-                    cell.classList.remove('questionmark');
-                    cell.textContent = ''; // Remove the emoji
-                } else {
-                    cell.classList.add('flag');
-                    cell.textContent = '🚩'; // Add the flag emoji
-                    if (mineField[x][y] === 'mine') correctlyFlaggedMines++;
-                }
-            }
-
-            checkWinCondition();
-        });
-
-
         function checkWinCondition() {
             if (correctlyFlaggedMines === totalMines) {
                 alert('Congratulations! You win!');
             }
         }
 
-        function game() {
-            createMinefield(10, 10, 10);
-            renderBoard();
+        function initializeGame() {
+            const height = parseInt(gridHeightInput.value);
+            const width = parseInt(gridWidthInput.value);
+            const mines = parseInt(mineCountInput.value);
+
+            createMinefield(height, width, mines);
+            renderBoard(height, width);
         }
 
-        resetButton.addEventListener('click', () => {
-            game(); // Restart the game
-        });
+        resetButton.addEventListener('click', initializeGame);
+        applySettingsButton.addEventListener('click', initializeGame);
 
-        // Start the game when the page loads
-        window.onload = game;
+        window.onload = initializeGame;
     </script>
 </body>
 </html>
