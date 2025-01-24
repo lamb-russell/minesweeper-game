@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 1px;
+            width: 600px;
+            height: 600px;
+            margin: auto;
+        }
+
+        .cell {
+            background-color: #fff;
+            border: 1px solid #999;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .cell.flag {
+            background-color: #f06e6e;
+        }
+
+        .cell.questionmark {
+            background-color: #ff9a9a;
+        }
+    </style>
+</head>
+<body>
+    <div class="board">
+        <!-- The cells will be rendered here -->
+    </div>
+    <script>
+      const board = document.querySelector('.board');
+      let mineField;
+
+      function createMinefield(height, width, mines) {
+        mineField = new Array(height);
+        for (let i = 0; i < height; i++) {
+          mineField[i] = [];
+          for (let j = 0; j < width; j++) {
+            mineField[i][j] = Math.random() < mines / (height * width) ? 'mine' : '.';
+          }
+        }
+      }
+
+      function renderBoard() {
+        board.innerHTML = '';
+        for (let i = 0; i < mineField.length; i++) {
+          const row = document.createElement('div');
+          row.classList.add('row');
+          for (let j = 0; j < mineField[i].length; j++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            if (mineField[i][j] === 'mine') cell.classList.add('mine');
+            row.appendChild(cell);
+          }
+          board.appendChild(row);
+        }
+      }
+
+      function countAdjacentMines(x, y) {
+        let minesCount = 0;
+        for (let i = x - 1; i <= x + 1; i++) {
+          for (let j = y - 1; j <= y + 1; j++) {
+            if (i < 0 || i >= mineField.length || j < 0 || j >= mineField[i].length) continue;
+            if (mineField[i][j] === 'mine') minesCount++;
+          }
+        }
+        return minesCount;
+      }
+
+      function revealCell(x, y) {
+        const cell = board.querySelector(`tr:nth-child(${x + 1}):nth-child(${y + 1}) .cell`);
+        if (mineField[x][y] === 'mine') {
+          cell.classList.add('mine');
+          for (let i = 0; i < mineField.length; i++) {
+            for (let j = 0; j < mineField[i].length; j++) {
+              if (mineField[i][j] === '.') continue;
+              setTimeout(() => revealCell(i, j), 50 * Math.random());
+            }
+          }
+        } else if (countAdjacentMines(x, y) !== 0) {
+          cell.textContent = countAdjacentMines(x, y);
+        } else {
+          cell.classList.add('revealed');
+          for (let i = x - 1; i <= x + 1; i++) {
+            for (let j = y - 1; j <= y + 1; j++) {
+              if (i < 0 || i >= mineField.length || j < 0 || j >= mineField[i].length) continue;
+              revealCell(i, j);
+            }
+          }
+        }
+      }
+
+      function game() {
+        createMinefield(10, 10, 10);
+        renderBoard();
+      }
+
+      // Start the game when the page loads
+      window.onload = game;
+    </script>
+</body>
+</html>
