@@ -231,15 +231,23 @@
             if (cell.classList.contains('cell') && !cell.classList.contains('revealed')) {
                 if (cell.classList.contains('flag')) {
                     cell.classList.remove('flag');
+                    cell.textContent = ''; // Remove the emoji
+                    cell.classList.add('questionmark');
+                    cell.textContent = '❓'; // Add the question mark emoji
                     if (mineField[x][y] === 'mine') correctlyFlaggedMines--;
+                } else if (cell.classList.contains('questionmark')) {
+                    cell.classList.remove('questionmark');
+                    cell.textContent = ''; // Remove the emoji
                 } else {
                     cell.classList.add('flag');
+                    cell.textContent = '🚩'; // Add the flag emoji
                     if (mineField[x][y] === 'mine') correctlyFlaggedMines++;
                 }
             }
 
             checkWinCondition();
         });
+
 
         function checkWinCondition() {
             if (correctlyFlaggedMines === totalMines) {
