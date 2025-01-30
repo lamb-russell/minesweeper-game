@@ -2,7 +2,7 @@
 
 A classic Minesweeper game implemented in HTML, CSS, and JavaScript. This web-based version allows players to customize the board size and mine count before starting the game.
 
-![Minesweeper Game Screenshot](screenshot.png)
+![Minesweeper Game Screenshot](https://lamb-russell.github.io/minesweeper-game/snapshot.png)
 
 ## Table of Contents
 
